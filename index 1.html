@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SmartLibrary</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header>
+    <h1>📚 SmartLibrary</h1>
+</header>
+
+<div class="container">
+
+<section>
+    <h2>User Account</h2>
+    <input placeholder="Username">
+    <input placeholder="Email">
+    <button>User Registered</button>
+</section>
+
+<section>
+    <h2>Catalog Search</h2>
+    <button onclick="loadBooks()">Load Books</button>
+    <ul id="books"></ul>
+</section>
+
+<section>
+    <h2>Book Reservation</h2>
+    <button onclick="reserve()">Reserve Book</button>
+    <p id="reserveMsg"></p>
+</section>
+
+<section>
+    <h2>Overdue Alerts</h2>
+    <button onclick="checkOverdue()">Check Overdue</button>
+    <p id="overdue"></p>
+</section>
+
+<section>
+    <h2>Recommendations</h2>
+    <p>Recommended: Clean Code, Refactoring</p>
+</section>
+
+<section>
+    <h2>Analytics Dashboard</h2>
+    <button onclick="loadAnalytics()">View Analytics</button>
+    <p id="analytics"></p>
+</section>
+
+<section>
+    <h2>Export Reports</h2>
+    <button onclick="exportCSV()">Export CSV</button>
+</section>
+
+<section>
+    <h2>Testing</h2>
+    <p>Catalog search & reservation tested successfully ✔</p>
+</section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
