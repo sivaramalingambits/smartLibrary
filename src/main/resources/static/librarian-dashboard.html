@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Librarian Dashboard | SmartLib</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    * {
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background-color: #f3f4f6;
+    }
+
+    .navbar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 64px;
+      background-color: #111827;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 28px;
+      z-index: 1000;
+    }
+
+    .navbar h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .logout-btn {
+      background-color: #dc2626;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .container {
+      display: flex;
+      margin-top: 64px;
+      min-height: calc(100vh - 64px);
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: #1f2937;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar h3 {
+      font-size: 14px;
+      color: #9ca3af;
+      margin-bottom: 12px;
+    }
+
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 6px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .sidebar a:hover {
+      background-color: #374151;
+    }
+
+    .main {
+      flex: 1;
+      padding: 24px;
+    }
+
+    button.approve-btn {
+      background-color: #16a34a;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 24px;
+      background-color: white;
+    }
+
+    th, td {
+      padding: 14px;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 14px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f9fafb;
+    }
+
+    
+  </style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <h2>SmartLib • Librarian Dashboard</h2>
+  <button class="logout-btn">Logout</button>
+</div>
+
+<div class="container">
+
+  <div class="sidebar">
+    <h3>MENU</h3>
+    <a onclick="showManageBooks()">Manage Books</a>
+    <a onclick="showIssueBooks()">Issue Books</a>
+    <a onclick="showApprovedReservations()">Approved Reservations</a>
+    <a onclick="showOverdue()">Overdue</a>
+    <a onclick="loadMembers()">Members</a>
+    <a onclick="showReports()">Reports</a>
+  </div>
+
+  <div class="main">
+
+    <!-- Manage Books -->
+    <div id="manageBooksSection" style="display:none;">
+      <h1>Upload New Book</h1>
+
+      <form id="bookForm" enctype="multipart/form-data">
+        <input type="text" name="title" placeholder="Book Title" required /><br><br>
+        <input type="text" name="author" placeholder="Author" required /><br><br>
+        <input type="text" name="category" placeholder="Category" required /><br><br>
+        <input type="file" name="pdf" accept="application/pdf" required /><br><br>
+        <button type="submit">Upload Book</button>
+      </form>
+
+      <!-- Search Bar -->
+        <input
+        type="text"
+        id="bookSearchInput"
+        placeholder="Search by book title..."
+        onkeyup="filterBooks()"
+        style="width: 300px; padding: 8px; margin-top: 20px;"
+        />
+
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="booksBody"></tbody>
+      </table>
+    </div>
+
+    <!-- ISSUE BOOKS -->
+    <div id="issueBooksSection" style="display:none;">
+      <h1>Issue Books</h1>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Book Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Student Email</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="issueBody"></tbody>
+      </table>
+    </div>
+
+    <!-- APPROVED RESERVATIONS -->
+    <div id="reservations" class="page" style="display:none;">
+    <h1>Approved Reservations</h1>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Book</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Student</th>
+            <th>Reserved On</th>
+            <th>Status</th>
+        </tr>
+        </thead>
+        <tbody id="approvedReservationsBody"></tbody>
+    </table>
+    </div>
+
+
+    <!-- OVERDUE -->
+    <div id="overdueSection" style="display:none;">
+    <h1>Overdue Books</h1>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Book Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Student Email</th>
+            <th>Action</th>
+        </tr>
+        </thead>
+        <tbody id="overdueBody"></tbody>
+    </table>
+    </div>
+
+    <!-- Members -->
+    <div id="membersSection" style="display:none;">
+      <h1>Members</h1>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Student ID</th>
+            <th>Name</th>
+            <th>Email</th>
+          </tr>
+        </thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+    </div>
+
+    <!-- REPORTS -->
+    <div id="reportsSection" style="display:none;">
+    <h1>Reports</h1>
+
+    <button onclick="downloadReport('books')">📘 Books List</button><br><br>
+    <button onclick="downloadReport('members')">👥 Members List</button><br><br>
+    <button onclick="downloadReport('approved-reservations')"> ✅  Approved Reservations</button><br><br>
+    <button onclick="downloadReport('pending')">⏳ Pending Requests</button><br><br>
+    <button onclick="downloadReport('overdue')">⚠️ Overdue List</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function hideAll() {
+  document.getElementById("manageBooksSection").style.display = "none";
+  document.getElementById("issueBooksSection").style.display = "none";
+  document.getElementById("reservations").style.display = "none";
+  document.getElementById("overdueSection").style.display = "none"; 
+  document.getElementById("membersSection").style.display = "none";
+  document.getElementById("reportsSection").style.display = "none";
+}
+
+function showDashboard() {
+  hideAll();
+  document.getElementById("dashboardSection").style.display = "block";
+}
+
+function showManageBooks() {
+  hideAll();
+  document.getElementById("manageBooksSection").style.display = "block";
+  loadBooks();
+}
+
+function showIssueBooks() {
+  hideAll();
+  document.getElementById("issueBooksSection").style.display = "block";
+  loadIssueRequests(); 
+}
+
+let allBooks = [];
+
+function loadBooks() {
+  fetch("/librarian/books/all")
+    .then(res => res.json())
+    .then(books => {
+      allBooks = books;
+      renderBooks(books);
+    });
+}
+
+function renderBooks(books) {
+  const body = document.getElementById("booksBody");
+  body.innerHTML = "";
+
+  if (!books || books.length === 0) {
+    body.innerHTML = `
+      <tr>
+        <td colspan="4" style="text-align:center;">
+          No books found
+        </td>
+      </tr>`;
+    return;
+  }
+
+  books.forEach(book => {
+    body.innerHTML += `
+      <tr>
+        <td>${book.title}</td>
+        <td>${book.author}</td>
+        <td>${book.category}</td>
+        <td>
+          <button onclick="deleteBook(${book.id})">Delete</button>
+        </td>
+      </tr>`;
+  });
+}
+
+function filterBooks() {
+  const query = document
+    .getElementById("bookSearchInput")
+    .value
+    .toLowerCase();
+
+  const filtered = allBooks.filter(book =>
+    book.title.toLowerCase().includes(query)
+  );
+
+  renderBooks(filtered);
+}
+
+
+function deleteBook(id) {
+  fetch("/librarian/books/" + id, { method: "DELETE" })
+    .then(() => loadBooks());
+}
+
+function showApprovedReservations() {
+  hideAll();
+  document.getElementById("reservations").style.display = "block";
+  loadApprovedReservations();
+}
+
+function loadApprovedReservations() {
+  fetch("/reservation/approved/all")
+    .then(res => res.json())
+    .then(list => {
+      const body = document.getElementById("approvedReservationsBody");
+      body.innerHTML = "";
+
+      if (!list || list.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center;">
+              No approved reservations
+            </td>
+          </tr>`;
+        return;
+      }
+
+      list.forEach(r => {
+        body.innerHTML += `
+          <tr>
+            <td>${r.bookTitle}</td>
+            <td>${r.bookAuthor}</td>
+            <td>${r.bookCategory}</td>
+            <td>${r.studentEmail}</td>
+            <td>${new Date(r.reservedOn).toLocaleDateString()}</td>
+            <td>${r.status}</td>
+          </tr>`;
+      });
+    });
+}
+
+
+function showOverdue() {
+  hideAll();
+  document.getElementById("overdueSection").style.display = "block";
+  loadOverdueReservations();
+}
+
+function loadOverdueReservations() {
+  fetch("/librarian/overdue")
+    .then(res => res.json())
+    .then(list => {
+      const body = document.getElementById("overdueBody");
+      body.innerHTML = "";
+
+      if (!list || list.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center;">
+              No overdue reservations 🎉
+            </td>
+          </tr>`;
+        return;
+      }
+
+      list.forEach(r => {
+        body.innerHTML += `
+          <tr id="overdue-${r.reservationId}">
+            <td>${r.bookTitle}</td>
+            <td>${r.bookAuthor}</td>
+            <td>${r.bookCategory}</td>
+            <td>${r.studentEmail}</td>
+            <td>
+              <button class="approve-btn"
+                onclick="endReservation(${r.reservationId})">
+                End Reservation
+              </button>
+            </td>
+          </tr>`;
+      });
+    });
+}
+
+function endReservation(reservationId) {
+  if (!confirm("End this reservation?")) return;
+
+  fetch("/librarian/reservations/end", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reservationId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      document.getElementById("overdue-" + reservationId).remove();
+    }
+  })
+  .catch(err => {
+    console.error("End reservation failed", err);
+    alert("Failed to end reservation");
+  });
+}
+
+
+function loadMembers() {
+  hideAll();
+  document.getElementById("membersSection").style.display = "block";
+
+  fetch("/librarian/students")
+    .then(res => res.json())
+    .then(students => {
+      const body = document.getElementById("studentsBody");
+      body.innerHTML = "";
+      students.forEach(s => {
+        body.innerHTML += `
+          <tr>
+            <td>${s.id}</td>
+            <td>${s.name}</td>
+            <td>${s.email}</td>
+          </tr>`;
+      });
+    });
+}
+
+/* ================= ISSUE ================= */
+
+function loadIssueRequests() {
+  fetch("/librarian/issues/pending")
+    .then(res => res.json())
+    .then(issues => {
+      const body = document.getElementById("issueBody");
+      body.innerHTML = "";
+
+      if (!issues || issues.length === 0) {
+        body.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align:center;">No pending requests</td>
+          </tr>`;
+        return;
+      }
+
+      issues.forEach(issue => {
+        body.innerHTML += `
+          <tr id="issue-${issue.id}">
+            <td>${issue.bookTitle}</td>
+            <td>${issue.bookAuthor}</td>
+            <td>${issue.bookCategory}</td>
+            <td>${issue.studentEmail}</td>
+            <td>
+              <button class="approve-btn"
+                onclick="approveIssue(${issue.id})">
+                Approve
+              </button>
+            </td>
+          </tr>`;
+      });
+    });
+}
+
+function approveIssue(reservationId) {
+  fetch("/librarian/issues/approve", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reservationId })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      document.getElementById("issue-" + reservationId).remove();
+    }
+  });
+}
+
+/* ================= BOOK UPLOAD ================= */
+
+document.getElementById("bookForm").addEventListener("submit", function(e) {
+  e.preventDefault();
+  fetch("/librarian/books/upload", {
+    method: "POST",
+    body: new FormData(this)
+  })
+  .then(() => {
+    this.reset();
+    loadBooks();
+  });
+});
+
+//================= REPORTS =================
+function showReports() {
+  hideAll();
+  document.getElementById("reportsSection").style.display = "block";
+}
+
+function downloadReport(type) {
+  window.location.href = "/librarian/reports/" + type;
+}
+
+</script>
+
+</body>
+</html>
