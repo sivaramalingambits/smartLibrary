@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Student Dashboard | SmartLib</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    * { box-sizing: border-box; font-family: "Segoe UI", Tahoma, sans-serif; }
+    body { margin: 0; background-color: #f3f4f6; }
+
+    .navbar {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 60px;
+      background-color: #111827;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0 24px;
+      z-index: 1000;
+    }
+
+    .logout-btn {
+      background-color: #dc2626;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 6px;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .app { display: flex; margin-top: 60px; min-height: calc(100vh - 60px); }
+
+    .sidebar {
+      width: 220px;
+      background-color: #1f2937;
+      color: white;
+      padding: 20px;
+    }
+
+    .sidebar li {
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-bottom: 6px;
+    }
+
+    .sidebar li:hover { background-color: #374151; }
+
+    .content { flex: 1; padding: 24px; }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 14px;
+      text-align: left;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .reserve-btn {
+      background-color: #2563eb;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .read-btn {
+      background-color: #16a34a;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .recommend-card {
+      background: white;
+      padding: 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      border-left: 4px solid #2563eb;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="navbar">
+  <h2>📚 SmartLib • Student Dashboard</h2>
+
+  <div style="display:flex; align-items:center; gap:12px;">
+    <span id="studentEmailDisplay"
+          style="font-size:14px; color:#d1d5db;">
+    </span>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+</div>
+
+
+<div class="app">
+
+  <aside class="sidebar">
+    <ul>
+      <li onclick="showPage('catalog')">Catalog</li>
+      <li onclick="showPage('recommendations')">Recommendations</li>
+      <li onclick="showPage('reservations')">Reservation</li>
+      <li onclick="showPage('overdue')">Overdue</li>
+    </ul>
+  </aside>
+
+  <main class="content">
+
+    <!-- CATALOG -->
+    <section id="catalog" class="page">
+      <h1>Library Catalog</h1>
+
+      <!-- SEARCH BAR -->
+      <input
+        type="text"
+        id="searchInput"
+        placeholder="Search by book title..."
+        onkeyup="filterBooks()"
+        style="padding:10px; width:300px; border-radius:6px; border:1px solid #d1d5db; margin-bottom:10px;"
+      />
+
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th><th>Title</th><th>Author</th><th>Category</th><th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="booksBody"></tbody>
+      </table>
+    </section>
+
+    <!-- RECOMMENDATIONS -->
+    <section id="recommendations" class="page">
+      <h1>📚 Book Recommendations</h1>
+
+      <input
+        type="text"
+        id="categoryInput"
+        placeholder="Enter category (e.g. Java, AI, DBMS)"
+        style="padding:8px; width:60%;"
+        onkeydown="handleCategoryEnter(event)"
+      >
+      <button class="reserve-btn" onclick="fetchRecommendations()">Recommend</button>
+
+      <div id="recommendationsList" style="margin-top:20px;"></div>
+    </section>
+
+    <!-- RESERVATIONS -->
+    <section id="reservations" class="page">
+      <h1>Reserved Books</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="reservedBody"></tbody>
+      </table>
+    </section>
+
+    <!-- OVERDUE -->
+    <section id="overdue" class="page">
+      <h1>Overdue Books</h1>
+      <table>
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Author</th>
+            <th>Category</th>
+            <th>Last Date</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="overdueBody"></tbody>
+      </table>
+    </section>
+
+  </main>
+</div>
+
+<div id="pdfModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:2000;">
+  <div style="width:80%; height:90%; margin:3% auto; background:white; position:relative;">
+    <button onclick="closePdf()" style="position:absolute; top:10px; right:10px;">Close</button>
+    <iframe id="pdfFrame" style="width:100%; height:100%; border:none;"></iframe>
+  </div>
+</div>
+
+<script>
+function showPage(pageId) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.getElementById(pageId).classList.add("active");
+
+  if (pageId === "catalog") loadCatalog();
+  if (pageId === "reservations") loadReservedBooks();
+  if (pageId === "overdue") loadOverdueBooks();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const email = localStorage.getItem("studentEmail");
+
+  if (email) {
+    document.getElementById("studentEmailDisplay").textContent = email;
+  }
+});
+
+/* ===================== CATALOG ===================== */
+let allBooks = [];
+
+function loadCatalog() {
+  const studentEmail = localStorage.getItem("studentEmail");
+  if (!studentEmail) return;
+
+  // Fetch all books
+  fetch("/student/books")
+    .then(res => res.json())
+    .then(books => {
+      allBooks = books;
+
+      // Fetch reserved books by student
+      fetch(`/reservation/approved?studentEmail=${studentEmail}`)
+        .then(r => r.json())
+        .then(reservedList => {
+          const reservedBookIds = reservedList.map(b => b.bookId);
+          renderBooks(books, reservedBookIds);
+        });
+    });
+}
+
+function renderBooks(books, reservedBookIds = []) {
+  const body = document.getElementById("booksBody");
+  body.innerHTML = "";
+
+  if (!books || books.length === 0) {
+    body.innerHTML = `<tr><td colspan="5" style="text-align:center;">No books found</td></tr>`;
+    return;
+  }
+
+  books.forEach(b => {
+    const isReserved = reservedBookIds.includes(b.id);
+    const btnText = isReserved ? "Cancel Reservation" : "Request Reservation";
+    const btnColor = isReserved ? "#dc2626" : "#2563eb";
+
+    const btn = document.createElement("button");
+    btn.className = "reserve-btn";
+    btn.style.backgroundColor = btnColor;
+    btn.textContent = btnText;
+    btn.onclick = () => {
+      if (isReserved) cancelReservation(b.id, btn);
+      else requestReservation(b.id, btn);
+    };
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${b.id}</td><td>${b.title}</td><td>${b.author}</td><td>${b.category}</td>`;
+    const td = document.createElement("td");
+    td.appendChild(btn);
+    tr.appendChild(td);
+    body.appendChild(tr);
+  });
+}
+
+function filterBooks() {
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  const filtered = allBooks.filter(b => b.title.toLowerCase().includes(query));
+
+  const studentEmail = localStorage.getItem("studentEmail");
+  fetch(`/reservation/approved?studentEmail=${studentEmail}`)
+    .then(res => res.json())
+    .then(reservedList => {
+      const reservedBookIds = reservedList.map(b => b.bookId);
+      renderBooks(filtered, reservedBookIds);
+    });
+}
+
+/* ===================== RESERVATION ACTIONS ===================== */
+function requestReservation(bookId, btn) {
+  const studentEmail = localStorage.getItem("studentEmail");
+  if (!studentEmail) { alert("Student not logged in!"); return; }
+
+  fetch("/reservation/request", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bookId, studentEmail })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      btn.textContent = "Cancel Reservation";
+      btn.style.backgroundColor = "#dc2626";
+      btn.onclick = () => cancelReservation(bookId, btn);
+    } else {
+      alert(data.message || "Reservation failed");
+    }
+  });
+}
+
+function cancelReservation(bookId, btn) {
+  const studentEmail = localStorage.getItem("studentEmail");
+
+  fetch("/reservation/cancel", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ bookId, studentEmail })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.status === "success") {
+      btn.textContent = "Request Reservation";
+      btn.style.backgroundColor = "#2563eb";
+      btn.onclick = () => requestReservation(bookId, btn);
+    } else {
+      alert(data.message || "Cancel failed");
+    }
+  });
+}
+
+/* ===================== RESERVED BOOKS ===================== */
+function loadReservedBooks() {
+  const email = localStorage.getItem("studentEmail");
+
+  fetch(`/reservation/approved?studentEmail=${email}`)
+    .then(res => res.json())
+    .then(list => {
+      const body = document.getElementById("reservedBody");
+      body.innerHTML = list.length
+        ? ""
+        : `<tr><td colspan="4">No approved reservations</td></tr>`;
+
+      list.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${b.bookTitle}</td><td>${b.bookAuthor}</td><td>${b.bookCategory}</td>`;
+        const td = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.className = "read-btn";
+        btn.textContent = "Read";
+        btn.onclick = () => readBook(b.bookId);
+        td.appendChild(btn);
+        tr.appendChild(td);
+        body.appendChild(tr);
+      });
+    });
+}
+
+/* ===================== OVERDUE BOOKS ===================== */
+function loadOverdueBooks() {
+  const email = localStorage.getItem("studentEmail");
+
+  fetch(`/reservation/overdue?studentEmail=${email}`)
+    .then(res => res.json())
+    .then(list => {
+      const body = document.getElementById("overdueBody");
+      body.innerHTML = list.length
+        ? ""
+        : `<tr><td colspan="5">No overdue books 🎉</td></tr>`;
+
+      list.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${b.title}</td><td>${b.author}</td><td>${b.category}</td><td>${new Date(b.lastDate).toLocaleDateString()}</td>`;
+        const td = document.createElement("td");
+        const btn = document.createElement("button");
+        btn.className = "reserve-btn";
+        btn.textContent = "Renew";
+        btn.onclick = () => renewReservation(b.reservationId);
+        td.appendChild(btn);
+        tr.appendChild(td);
+        body.appendChild(tr);
+      });
+    });
+}
+
+/* ===================== RENEW ===================== */
+function renewReservation(reservationId) {
+  const studentEmail = localStorage.getItem("studentEmail");
+
+  fetch("/reservation/renew", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ reservationId, studentEmail })
+  })
+  .then(res => res.json())
+  .then(() => {
+    alert("Book renewed successfully 📅");
+    loadOverdueBooks();
+  })
+  .catch(err => {
+    console.error("Renew failed:", err);
+    alert("Renew failed. Check console.");
+  });
+}
+
+/* ===================== READ ===================== */
+function readBook(id) {
+  pdfFrame.src = `/student/books/read/${id}`;
+  pdfModal.style.display = "block";
+}
+
+function closePdf() {
+  pdfModal.style.display = "none";
+  pdfFrame.src = "";
+}
+
+/* ===================== RECOMMENDATIONS ===================== */
+function handleCategoryEnter(e) {
+  if (e.key === "Enter") fetchRecommendations();
+}
+
+function fetchRecommendations() {
+  const category = document.getElementById("categoryInput").value.trim();
+  const list = document.getElementById("recommendationsList");
+
+  if (!category) {
+    list.innerHTML = "<p>Please enter a category</p>";
+    return;
+  }
+
+  fetch(`/student/books/recommendations?category=${encodeURIComponent(category)}`)
+    .then(r => r.json())
+    .then(data => {
+      list.innerHTML = data.length ? "" : "<p>No books found for this category.</p>";
+      data.forEach(b => {
+        const card = document.createElement("div");
+        card.className = "recommend-card";
+        card.innerHTML = `<strong>${b.title}</strong><br>Author: ${b.author}<br>Category: ${b.category}`;
+        list.appendChild(card);
+      });
+    })
+    .catch(err => {
+      console.error(err);
+      list.innerHTML = "<p>Error loading recommendations</p>";
+    });
+}
+
+/* ===================== LOGOUT ===================== */
+function logout() {
+  localStorage.removeItem("studentEmail");
+  location.href = "/login.html";
+}
+</script>
+
+</body>
+</html>
