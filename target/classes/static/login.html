@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SmartLib | Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding-top: 70px;
+        }
+
+        /* HEADER */
+        .header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 60px;
+            background-color: #1e293b;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
+
+        .header h2 {
+            margin: 0;
+        }
+
+        .header button {
+            padding: 8px 14px;
+            background-color: #2563eb;
+            border: none;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .header button:hover {
+            background-color: #1d4ed8;
+        }
+
+        /* LOGIN FORM */
+        .login-box {
+            max-width: 350px;
+            margin: 80px auto;
+            padding: 25px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+        }
+
+        .login-box h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .login-box input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+        }
+
+        .login-box button {
+            width: 100%;
+            padding: 10px;
+            background-color: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #message {
+            margin-top: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h2>SmartLib</h2>
+
+    <div id="authArea">
+        <button onclick="goToRegister()">Register</button>
+        <button onclick="showLogin()">Login</button>
+    </div>
+</div>
+
+<!-- LOGIN FORM -->
+<div class="login-box" id="loginBox">
+    <h3>Student Login</h3>
+
+    <form id="loginForm">
+        <input type="email" name="email" placeholder="Email" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <button type="submit">Login</button>
+    </form>
+
+    <p id="message"></p>
+</div>
+
+<script>
+    function showLogin() {
+        document.getElementById("loginBox").style.display = "block";
+    }
+
+    function goToRegister() {
+        window.location.href = "/register.html";
+    }
+
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+
+    fetch("/student/login", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.status === "success") {
+            //  Save student email in browser storage
+            localStorage.setItem("studentEmail", data.email);
+
+            // Redirect to student dashboard
+            window.location.href = "/student-dashboard.html";
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(() => {
+        alert("Server error. Try again.");
+    });
+});
+
+
+    function goToProfile() {
+        window.location.href = "/student-profile.html";
+    }
+</script>
+
+</body>
+</html>
